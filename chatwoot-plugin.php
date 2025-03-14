@@ -15,6 +15,7 @@
 require_once plugin_dir_path(__FILE__) . 'includes/crypto.php';
 require_once plugin_dir_path(__FILE__) . 'includes/admin-hmac-tester.php';
 require_once plugin_dir_path(__FILE__) . 'includes/admin-key-generator.php';
+require_once plugin_dir_path(__FILE__) . 'includes/identity.php';
 
 
 add_action('admin_enqueue_scripts', 'admin_styles');
@@ -49,23 +50,19 @@ add_action( 'wp_enqueue_scripts', 'chatwoot_load' );
  *
  * @return {void}.
  */
+
 function chatwoot_load() {
+  $chatwoot_data = [
+    'token' => get_option('chatwootSiteToken'),
+    'url' => get_option('chatwootSiteURL'),
+    'locale' => get_option('chatwootWidgetLocale'),
+    'type' => get_option('chatwootWidgetType'),
+    'position' => get_option('chatwootWidgetPosition'),
+    'launcherTitle' => get_option('chatwootLauncherText'),
+  ];
 
-  // Get our site options for site url and token.
-  $chatwoot_url = get_option('chatwootSiteURL');
-  $chatwoot_token = get_option('chatwootSiteToken');
-  $chatwoot_widget_locale = get_option('chatwootWidgetLocale');
-  $chatwoot_widget_type = get_option('chatwootWidgetType');
-  $chatwoot_widget_position = get_option('chatwootWidgetPosition');
-  $chatwoot_launcher_text = get_option('chatwootLauncherText');
-
-  // Localize our variables for the Javascript embed code.
-  wp_localize_script('chatwoot-client', 'chatwoot_token', $chatwoot_token);
-  wp_localize_script('chatwoot-client', 'chatwoot_url', $chatwoot_url);
-  wp_localize_script('chatwoot-client', 'chatwoot_widget_locale', $chatwoot_widget_locale);
-  wp_localize_script('chatwoot-client', 'chatwoot_widget_type', $chatwoot_widget_type);
-  wp_localize_script('chatwoot-client', 'chatwoot_launcher_text', $chatwoot_launcher_text);
-  wp_localize_script('chatwoot-client', 'chatwoot_widget_position', $chatwoot_widget_position);
+  // Pass all variables in a single localized JS object
+  wp_localize_script('chatwoot-client', 'chatwootSettings', $chatwoot_data);
 }
 
 add_action('admin_menu', 'chatwoot_setup_menu');
@@ -103,12 +100,20 @@ function chatwoot_register_settings() {
   register_setting('chatwoot-plugin-options', 'chatwootWidgetType' );
   register_setting('chatwoot-plugin-options', 'chatwootWidgetPosition' );
   register_setting('chatwoot-plugin-options', 'chatwootLauncherText' );
-  //register_setting('chatwoot-plugin-options', 'chatwootWebWidgetHmacToken');
   register_setting('chatwoot-plugin-options', 'chatwootWebWidgetHmacToken', [
     'type' => 'string',
     'sanitize_callback' => 'chatwoot_encrypt',
   ]);
   
+}
+
+add_action('wp_footer', 'chatwoot_inject_identity');
+
+function chatwoot_inject_identity() {
+  $payload = chatwoot_get_user_payload();
+  if (!$payload || empty($payload['identifier']) || empty($payload['hash'])) return;
+
+  echo '<script>window.chatwootIdentity = ' . json_encode($payload, JSON_UNESCAPED_SLASHES) . ';</script>';
 }
 
 /**
