@@ -25,6 +25,8 @@ function chatwoot_get_visitor_id() {
 /**
  * Generates and stores anonymous UUID in secure cookie
  */
+
+ /* old
 function chatwoot_generate_anonymous_id() {
     $uuid = wp_generate_uuid4();
     setcookie('cw_vid', $uuid, [
@@ -36,6 +38,27 @@ function chatwoot_generate_anonymous_id() {
     ]);
     return $uuid;
 }
+*/
+
+function chatwoot_generate_anonymous_id() {
+    $uuid = wp_generate_uuid4();
+  
+    // Schedule the cookie to be set in init phase to avoid "headers already sent"
+    add_action('init', function () use ($uuid) {
+      if (!headers_sent()) {
+        setcookie('cw_vid', $uuid, [
+          'expires' => time() + 31536000,
+          'path' => '/',
+          'secure' => is_ssl(),
+          'httponly' => true,
+          'samesite' => 'Lax',
+        ]);
+      }
+    }, 1); // Priority 1 to run early
+  
+    return $uuid;
+  }
+  
 
 /**
  * Generates the HMAC identifier_hash
