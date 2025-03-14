@@ -4,7 +4,7 @@ if (!defined('ABSPATH')) exit;
 require_once __DIR__ . '/crypto.php';
 
 /**
- * Returns the visitor ID — user ID or anonymous UUID from cookie.
+ * Get the visitor ID — user ID for logged-in users or UUID for anonymous.
  */
 function chatwoot_get_visitor_id() {
     static $visitor_id = null;
@@ -23,45 +23,30 @@ function chatwoot_get_visitor_id() {
 }
 
 /**
- * Generates and stores anonymous UUID in secure cookie
+ * Generates and stores anonymous UUID in secure cookie.
+ * Uses the init hook to safely set the cookie before headers are sent.
  */
-
- /* old
 function chatwoot_generate_anonymous_id() {
     $uuid = wp_generate_uuid4();
-    setcookie('cw_vid', $uuid, [
-        'expires' => time() + 31536000, // 1 year
-        'path' => '/',
-        'secure' => is_ssl(),
-        'httponly' => true,
-        'samesite' => 'Lax'
-    ]);
+
+    // Delay setting cookie until headers are safe
+    add_action('init', function () use ($uuid) {
+        if (!headers_sent()) {
+            setcookie('cw_vid', $uuid, [
+                'expires' => time() + 31536000, // 1 year
+                'path' => '/',
+                'secure' => is_ssl(),
+                'httponly' => true,
+                'samesite' => 'Lax',
+            ]);
+        }
+    }, 1); // Run early
+
     return $uuid;
 }
-*/
-
-function chatwoot_generate_anonymous_id() {
-    $uuid = wp_generate_uuid4();
-  
-    // Schedule the cookie to be set in init phase to avoid "headers already sent"
-    add_action('init', function () use ($uuid) {
-      if (!headers_sent()) {
-        setcookie('cw_vid', $uuid, [
-          'expires' => time() + 31536000,
-          'path' => '/',
-          'secure' => is_ssl(),
-          'httponly' => true,
-          'samesite' => 'Lax',
-        ]);
-      }
-    }, 1); // Priority 1 to run early
-  
-    return $uuid;
-  }
-  
 
 /**
- * Generates the HMAC identifier_hash
+ * Generates the HMAC identifier_hash.
  */
 function chatwoot_generate_hash($visitor_id) {
     static $cached_token = null;
@@ -78,9 +63,8 @@ function chatwoot_generate_hash($visitor_id) {
     return $token ? hash_hmac('sha256', $visitor_id, $token) : '';
 }
 
-
 /**
- * Returns full Chatwoot identity payload for JS injection
+ * Builds the full Chatwoot identity payload.
  */
 function chatwoot_get_user_payload() {
     $visitor_id = chatwoot_get_visitor_id();
@@ -88,13 +72,16 @@ function chatwoot_get_user_payload() {
 
     $payload = [
         'identifier' => $visitor_id,
-        'hash' => $identifier_hash
+        'hash' => $identifier_hash,
     ];
 
     if (is_user_logged_in()) {
         $user = wp_get_current_user();
         $payload['name'] = $user->display_name;
         $payload['email'] = $user->user_email;
+    } else {
+        // 🔥 PATCH: Provide fallback "name" to prevent Chatwoot SDK error
+        $payload['name'] = 'Guest ' . substr($visitor_id, 0, 8);
     }
 
     return $payload;
