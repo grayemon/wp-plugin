@@ -20,7 +20,10 @@
     };
 
     // ✅ Identity validation via HMAC (if injected from PHP)
+    console.log("window.chatwootIdentity:", window.chatwootIdentity); // Add this line before the event listener
+    window.ChatwootDebug = true; // Ensure this is set before the event listener
     window.addEventListener("chatwoot:ready", function () {
+      console.log("chatwoot:ready event fired"); // Add this line
       if (
         window.chatwootIdentity &&
         window.chatwootIdentity.identifier &&
