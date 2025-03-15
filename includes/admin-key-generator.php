@@ -1,14 +1,26 @@
 <?php
-if (!defined('ABSPATH')) exit;
+
+if (!defined('ABSPATH')) exit; // 🔐 Exit if accessed directly
+//if (get_option('chatwootEnableKeyGenerator') !== '1') return;
 
 class Chatwoot_Key_Generator_Admin {
 
+    /*
     public function __construct() {
         if (
             defined('DISABLE_CHATWOOT_KEY_GENERATOR') &&
             DISABLE_CHATWOOT_KEY_GENERATOR === true
         ) {
             return;
+        }
+
+        add_action('admin_menu', [$this, 'register_tool_page']);
+    }
+    */
+
+    public function __construct() {
+        if (get_option('chatwootEnableKeyGenerator') !== '1') {
+            return; // 👈 early exit
         }
 
         add_action('admin_menu', [$this, 'register_tool_page']);
@@ -31,13 +43,15 @@ class Chatwoot_Key_Generator_Admin {
 
         $key = '';
         $iv = '';
+        $error = '';
 
         if (isset($_POST['generate_keys'])) {
             try {
                 $key = 'base64:' . base64_encode(random_bytes(32)); // AES-256
                 $iv  = 'base64:' . base64_encode(random_bytes(16)); // 16-byte IV
             } catch (Exception $e) {
-                $error = 'Error generating keys: ' . $e->getMessage();
+                //$error = 'Error generating keys: ' . $e->getMessage();
+                $error = '❌ Error generating keys: ' . esc_html($e->getMessage());
             }
         }
         ?>
@@ -46,6 +60,10 @@ class Chatwoot_Key_Generator_Admin {
 
             <p>This tool will generate a secure AES-256 encryption key and IV for use with <code>chatwoot_encrypt()</code> / <code>chatwoot_decrypt()</code>.</p>
             <p><strong>⚠️ IMPORTANT:</strong> Only generate keys ONCE and paste them into your <code>wp-config.php</code>. If you lose them, encrypted data will become unreadable.</p>
+
+            <?php if (!empty($error)) : ?>
+                <div class="notice notice-error"><p><?php echo $error; ?></p></div>
+            <?php endif; ?>
 
             <form method="post">
                 <?php submit_button('Generate New Key + IV', 'primary', 'generate_keys'); ?>
@@ -64,16 +82,25 @@ class Chatwoot_Key_Generator_Admin {
                         <td><code id="cw-iv"><?php echo esc_html($iv); ?></code></td>
                     </tr>
                 </table>
+
                 <h3>📄 Paste into <code>wp-config.php</code>:</h3>
                 <pre><code>define('CHATWOOT_ENCRYPTION_KEY', '<?php echo esc_js($key); ?>');
 define('CHATWOOT_ENCRYPTION_IV', '<?php echo esc_js($iv); ?>');</code></pre>
 
-                <button class="button button-secondary" onclick="navigator.clipboard.writeText(document.getElementById('cw-key').innerText)">📋 Copy Key</button>
-                <button class="button button-secondary" onclick="navigator.clipboard.writeText(document.getElementById('cw-iv').innerText)">📋 Copy IV</button>
+                <p>
+                    <button class="button button-secondary" onclick="navigator.clipboard.writeText(document.getElementById('cw-key').innerText)">📋 Copy Key</button>
+                    <button class="button button-secondary" onclick="navigator.clipboard.writeText(document.getElementById('cw-iv').innerText)">📋 Copy IV</button>
+                </p>
+
             <?php endif; ?>
         </div>
         <?php
     }
 }
 
-new Chatwoot_Key_Generator_Admin();
+//new Chatwoot_Key_Generator_Admin();
+
+// 🧠 Load when plugin is initialized (instead of global scope)
+add_action('plugins_loaded', function () {
+    new Chatwoot_Key_Generator_Admin();
+});

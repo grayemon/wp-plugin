@@ -4,7 +4,10 @@
   display: block;
 }
 
-.form--input input {
+.form--input input[type="text"],
+.form--input input[type="url"],
+.form--input input[type="password"],
+.form--input input[type="email"] {
   margin-bottom: 16px;
   min-width: 400px;
 }
@@ -29,4 +32,34 @@
 .chatwoot--form hr {
   margin-bottom: 24px;
   margin-top: 16px;
+}
+
+/* 👨‍💻 Advanced Developer Tools section styling */
+
+.form--input.checkbox-group {
+  margin-bottom: 16px;
+}
+
+.form--input.checkbox-group label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.chatwoot--form pre {
+  background: #f6f8fa;
+  border: 1px solid #dcdcdc;
+  padding: 12px;
+  font-size: 13px;
+  border-radius: 4px;
+  overflow-x: auto;
+}
+
+.chatwoot--form summary {
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 6px;
+  font-size: 14px;
 }

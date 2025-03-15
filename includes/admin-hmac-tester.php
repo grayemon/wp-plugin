@@ -1,14 +1,13 @@
 <?php
+
 if (!defined('ABSPATH')) exit;
+//if (get_option('chatwootEnableHmacTester') !== '1') return; // 👈 early exit
 
 class Chatwoot_HMAC_Tester_Admin {
 
     public function __construct() {
-        if (
-            defined('DISABLE_CHATWOOT_HMAC_TEST') &&
-            DISABLE_CHATWOOT_HMAC_TEST === true
-        ) {
-            return;
+        if (get_option('chatwootEnableHmacTester') !== '1') {
+            return; // 👈 early exit
         }
 
         add_action('admin_menu', [$this, 'register_tool_page']);
@@ -106,9 +105,13 @@ class Chatwoot_HMAC_Tester_Admin {
                 </table>
 
                 <h3>💬 Sample JavaScript</h3>
-                <pre><code>window.$chatwoot.setUser('<?php echo esc_js($visitor_id); ?>', {
-  identifier_hash: '<?php echo esc_js($hash); ?>'
-});</code></pre>
+                <pre>
+<code>
+window.$chatwoot.setUser('<?php echo esc_js($visitor_id); ?>', {
+identifier_hash: '<?php echo esc_js($hash); ?>'
+});
+</code>
+                </pre>
             <?php endif; ?>
         </div>
         <?php
