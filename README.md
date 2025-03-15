@@ -1,85 +1,166 @@
-# Chatwoot Plugin #
+# 🔐 Chatwoot Plugin for WordPress — Secure Identity Validation Edition
 
-**Contributors:** [antpb](https://profiles.wordpress.org/antpb), [chatwootengineering](https://profiles.wordpress.org/chatwootengineering)  
-**Tags:** chat, live-chat, support, chat-support, customer-support, customer-engagement  
-**Requires at least:** 5.2  
-**Tested up to:** 6.4  
-**Requires PHP:** 7.2  
-**Stable tag:** 0.3.0  
-**License:** GPLv2 or later  
-**License URI:** https://www.gnu.org/licenses/gpl-2.0.html  
+Easily embed the [Chatwoot](https://www.chatwoot.com) live-chat widget on your WordPress site — with **optional HMAC-based user identity validation** for authenticated support experiences.
 
-## Description ##
+[![WordPress Tested](https://img.shields.io/badge/WordPress-6.4-green.svg)](https://wordpress.org/plugins/)
+[![PHP](https://img.shields.io/badge/PHP-%3E=7.2-blue)](https://www.php.net/)
+[![License: GPLv2](https://img.shields.io/badge/license-GPLv2-blue.svg)](https://www.gnu.org/licenses/gpl-2.0.html)
 
-This plugin allows you to add a Chatwoot live-chat widget on every page of your WordPress website. It also supports advanced customization options including:
+---
 
-- Widget locale (language)
-- Widget position (left or right)
-- Design type (standard or expanded)
-- Optional launcher text
-- 🔐 **(New)** Secure identity validation via HMAC token for authenticated users (optional)
+## 🎯 Features
 
-This allows you to integrate Chatwoot’s live support system with full user verification using the secure Chatwoot SDK.
+- ✅ Embed Chatwoot widget via WP settings
+- 🌍 Set language, position, style, launcher text
+- 🔐 Secure identity validation with `setUser()` and `identifier_hash`
+- 🔑 AES-256 encrypted HMAC token storage
+- 🧠 Guest users get unique fallback names (e.g. `Guest a8b14f12`)
+- 🔎 DevTools debugging with `window.ChatwootDebug = true;`
+- 🧪 Built-in tools:
+  - HMAC Validator
+  - Key Generator (base64-ready)
+- ⚙️ Multi-site compatible
 
-## Installation ##
+---
 
-1. Download the plugin as a zip file.
-2. Upload it via the **Plugins > Add New > Upload Plugin** screen in your WordPress admin.
-3. Activate the plugin.
-4. Go to **Settings > Chatwoot Settings** to configure your website token and URL.
+## 📦 Installation
 
-## Frequently Asked Questions ##
+1. Clone or download this repo  
+2. Upload to `/wp-content/plugins/chatwoot-secure`  
+3. Activate in **Plugins > Installed Plugins**
+4. Go to **Settings > Chatwoot Settings**
+5. Fill in the following:
 
-### 1. Do I need an account at Chatwoot to use this plugin?
+| Field | Example |
+|-------|---------|
+| Website Token | `abc123xyz456` |
+| Installation URL | `https://app.chatwoot.com` |
+| Web Widget HMAC Token | (paste your token here) |
 
-Yes. You need an account either on a **self-hosted Chatwoot instance** or on **Chatwoot Cloud** (`https://app.chatwoot.com`).  
-You must create a **website inbox** and use the generated website token in the plugin settings.
+---
 
-### 2. Can I use the live-chat in different languages?
+## 🔐 Identity Validation
 
-Yes. The widget supports multiple languages. You can select the locale in the settings panel.
+To verify users in Chatwoot, we pass:
 
-### 3. Does this plugin support secure identity validation?
+```js
+window.$chatwoot.setUser('<identifier>', {
+  name: 'John Doe',
+  email: 'john@example.com',
+  identifier_hash: '<server-side-hmac>'
+});
+```
+### ✅ Who gets identified?
 
-Yes (as of version 0.3.0). If you define a secure HMAC token, the plugin will inject identity validation via `window.$chatwoot.setUser(...)`, ensuring verified user sessions.
+-   **Logged-in users:** WP user ID + email/name + `identifier_hash`
+    
+-   **Guests:** Anonymous UUID + fallback name like `Guest 7c92a9b1`
+    
 
-### 4. Can I disable the built-in tools for production?
+### ✅ HMAC: How it works
 
-Yes. Use these constants in your `wp-config.php`:
+1.  The plugin uses `hash_hmac('sha256', $visitor_id, $token)`
+    
+2.  The token is encrypted and stored in WP options
+    
+3.  You inject `identifier_hash` only via PHP — **never exposed**
+---
+## 🛠 Setup Encryption Keys
 
+Edit `wp-config.php` and add:
+
+```php
+define('CHATWOOT_ENCRYPTION_KEY', 'base64:...');
+define('CHATWOOT_ENCRYPTION_IV', 'base64:...');
+``` 
+
+You can generate secure values via:
+
+-   **Tools → Generate Chatwoot Key** (admin-only page)
+    
+-   Or run:
+```php
+base64_encode(random_bytes(32)); // key  
+base64_encode(random_bytes(16)); // IV
+```
+---
+## 🧪 Test Identity Validation
+
+Enable admin test page under:
+**Tools → Test Chatwoot HMAC**
+Also test manually via browser:
+```js
+window.ChatwootDebug = true;
+``` 
+🔍 DevTools Console will show:
+```yaml
+🔐  Chatwoot  Identity  Debug  
+🆔  Identifier:  42  
+🔑  HMAC Hash:  c0ffee3...  
+👤  Name:  Guest  7c92a9b1
+``` 
+And Chatwoot’s API should respond with:
+```json
+"hmac_verified":  true
+```
+---
+## 💡 Disable Debug Tools in Production
+In `wp-config.php`:
+```php
 define('DISABLE_CHATWOOT_HMAC_TEST', true);
 define('DISABLE_CHATWOOT_KEY_GENERATOR', true);
+```
+---
+## 🖼 Screenshots
 
-This will hide the test/debug admin tools from WordPress Dashboard.
+Admin Settings
+
+|Frontend| Chatwoot|
+|---|---|
+|pic1|pic2|
+---
+## 🗂 Directory Structure
+
+``` pgsql
+chatwoot-secure/
+├── chatwoot-plugin.php
+├── js/
+│   └── chatwoot.js
+├── includes/
+│   ├── crypto.php
+│   ├── identity.php
+│   ├── admin-key-generator.php
+│   └── admin-hmac-tester.php
+├── admin.css
+└── readme.txt
+```
+---
+## 📄 License
+
+This plugin is licensed under the [GNU GPL v2 or later](https://www.gnu.org/licenses/gpl-2.0.html).
 
 ---
+## 🙌 Credits
 
-## Screenshots ##
-
-1. Chatwoot widget on the front-end
-2. Admin panel settings interface
-
+-   🧠 Original plugin by [antpb](https://profiles.wordpress.org/antpb)
+    
+-   🔒 HMAC support & crypto by [you / your org]
+    
+-   💬 Chatwoot team for the open-source chat platform
 ---
+## 🌐 Links
 
-## Changelog ##
-
-### 0.3.0 ###
-- 🔐 Added optional identity validation using HMAC tokens.
-- 🧼 Secured token storage with AES-256 encryption.
-- 🛠 Added admin tool: HMAC tester.
-- 🛠 Added admin tool: key generator for `wp-config.php`.
-
-### 0.2.0 ###
-- Added options for customizing widget locale, position, and launcher text.
-- Updated admin settings styles.
-
-### 0.1.0 ###
-- Initial release with simple embed via saved options.
-
+-   🔗 [Chatwoot Documentation](https://www.chatwoot.com/help-center)
+    
+-   💻 [Chatwoot GitHub](https://github.com/chatwoot/chatwoot)
+    
+-   ⚙️ [Plugin Repository](https://github.com/grayemon/wp-plugin)
 ---
+## 🚀 Roadmap
 
-## Upgrade Notice ##
-
-### 0.3.0 ###
-If using identity validation, define `CHATWOOT_ENCRYPTION_KEY` and `CHATWOOT_ENCRYPTION_IV` in `wp-config.php`.  
-Existing settings will continue to work without changes.
+-   Support multi-identity context switching
+    
+-   REST API hook for external HMAC tools
+    
+-   WooCommerce & membership integrations
+---
