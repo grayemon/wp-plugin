@@ -6,7 +6,7 @@
  * Author:          antpb
  * Author URI:      chatwoot.com
  * Text Domain:     chatwoot-plugin
- * Version:         0.2.0
+ * Version:         0.3.1
  *
  * @package         chatwoot-plugin
  */
@@ -106,7 +106,7 @@ function chatwoot_register_settings() {
     'sanitize_callback' => 'chatwoot_encrypt',
   ]);
 
-  // new options
+  // Advanced settings options
   add_option('chatwootEnableHmacTester', '0');
   add_option('chatwootEnableKeyGenerator', '0');
   add_option('chatwootEnableDebugMode', '0');
@@ -120,6 +120,7 @@ add_action('wp_footer', 'chatwoot_inject_identity');
 
 function chatwoot_inject_identity() {
   $payload = chatwoot_get_user_payload();
+
   if (!$payload || empty($payload['identifier']) || empty($payload['hash'])) return;
     echo '<script>window.chatwootIdentity = ' . json_encode($payload, JSON_UNESCAPED_SLASHES) . ';</script>';
 
@@ -127,9 +128,6 @@ function chatwoot_inject_identity() {
     echo '<script>console.info("🛠 Chatwoot Debug Mode is ON");</script>';
   }
     
-  //if (get_option('chatwootEnableDebugMode') === '1') {
-    //echo '<script>window.ChatwootDebug = true;</script>';
-  //}
 }
 
 /**
@@ -139,151 +137,6 @@ function chatwoot_inject_identity() {
  *
  * @return {void}.
  */
-
- /* to deprecate
-function chatwoot_options_page() {
-  ?>
-  <div>
-    <h2>Chatwoot Settings</h2>
-    <form method="post" action="options.php" class="chatwoot--form">
-      <?php settings_fields('chatwoot-plugin-options'); ?>
-      <div class="form--input">
-        <label for="chatwootSiteToken">Chatwoot Website Token</label>
-        <input
-          type="text"
-          name="chatwootSiteToken"
-          value="<?php echo get_option('chatwootSiteToken'); ?>"
-        />
-      </div>
-      <div class="form--input">
-        <label for="chatwootSiteURL">Chatwoot Installation URL</label>
-        <input
-          type="text"
-          name="chatwootSiteURL"
-          value="<?php echo get_option('chatwootSiteURL'); ?>"
-        />
-      </div>
-      <div class="form--input">
-        <label for="chatwootWebWidgetHmacToken">Web Widget HMAC Token</label>
-        <input
-          type="text"
-          name="chatwootWebWidgetHmacToken"
-          value="<?php echo esc_attr(chatwoot_decrypt(get_option('chatwootWebWidgetHmacToken'))); ?>"
-        />
-        <p class="description">Used for HMAC identity validation (will not be exposed publicly).</p>
-      </div>
-      <hr />
-
-      <div class="form--input">
-        <label for="chatwootWidgetType">Widget Design</label>
-        <select name="chatwootWidgetType">
-          <option value="standard" <?php selected(get_option('chatwootWidgetType'), 'standard'); ?>>Standard</option>
-          <option value="expanded_bubble" <?php selected(get_option('chatwootWidgetType'), 'expanded_bubble'); ?>>Expanded Bubble</option>
-        </select>
-      </div>
-      <div class="form--input">
-        <label for="chatwootWidgetPosition">Widget Position</label>
-        <select name="chatwootWidgetPosition">
-          <option value="left" <?php selected(get_option('chatwootWidgetPosition'), 'left'); ?>>Left</option>
-          <option value="right" <?php selected(get_option('chatwootWidgetPosition'), 'right'); ?>>Right</option>
-        </select>
-      </div>
-      <div class="form--input">
-        <label for="chatwootWidgetLocale">Language</label>
-        <select name="chatwootWidgetLocale">
-          <option <?php selected(get_option('chatwootWidgetLocale'), 'ar'); ?> value="ar">العربية (ar)</option>
-          <option <?php selected(get_option('chatwootWidgetLocale'), 'ca'); ?> value="ca">Català (ca)</option>
-          <option <?php selected(get_option('chatwootWidgetLocale'), 'cs'); ?> value="cs">čeština (cs)</option>
-          <option <?php selected(get_option('chatwootWidgetLocale'), 'da'); ?> value="da">dansk (da)</option>
-          <option <?php selected(get_option('chatwootWidgetLocale'), 'de'); ?> value="de">Deutsch (de)</option>
-          <option <?php selected(get_option('chatwootWidgetLocale'), 'el'); ?> value="el">ελληνικά (el)</option>
-          <option <?php selected(get_option('chatwootWidgetLocale'), 'en'); ?> value="en">English (en)</option>
-          <option <?php selected(get_option('chatwootWidgetLocale'), 'es'); ?> value="es">Español (es)</option>
-          <option <?php selected(get_option('chatwootWidgetLocale'), 'fa'); ?> value="fa">فارسی (fa)</option>
-          <option <?php selected(get_option('chatwootWidgetLocale'), 'fi'); ?> value="fi">suomi, suomen kieli (fi)</option>
-          <option <?php selected(get_option('chatwootWidgetLocale'), 'fr'); ?> value="fr">Français (fr)</option>
-          <option <?php selected(get_option('chatwootWidgetLocale'), 'hi'); ?> value="hi'">हिन्दी (hi)</option>
-          <option <?php selected(get_option('chatwootWidgetLocale'), 'hu'); ?> value="hu">magyar nyelv (hu)</option>
-          <option <?php selected(get_option('chatwootWidgetLocale'), 'id'); ?> value="id">Bahasa Indonesia (id)</option>
-          <option <?php selected(get_option('chatwootWidgetLocale'), 'it'); ?> value="it">Italiano (it)</option>
-          <option <?php selected(get_option('chatwootWidgetLocale'), 'ja'); ?> value="ja">日本語 (ja)</option>
-          <option <?php selected(get_option('chatwootWidgetLocale'), 'ko'); ?> value="ko">한국어 (ko)</option>
-          <option <?php selected(get_option('chatwootWidgetLocale'), 'ml'); ?> value="ml">മലയാളം (ml)</option>
-          <option <?php selected(get_option('chatwootWidgetLocale'), 'nl'); ?> value="nl">Nederlands (nl) </option>
-          <option <?php selected(get_option('chatwootWidgetLocale'), 'no'); ?> value="no">norsk (no)</option>
-          <option <?php selected(get_option('chatwootWidgetLocale'), 'pl'); ?> value="pl">język polski (pl)</option>
-          <option <?php selected(get_option('chatwootWidgetLocale'), 'pt_BR'); ?> value="pt_BR">Português Brasileiro (pt-BR)
-          <option <?php selected(get_option('chatwootWidgetLocale'), 'pt'); ?> value="pt">Português (pt)</option>
-          <option <?php selected(get_option('chatwootWidgetLocale'), 'ro'); ?> value="ro">Română (ro)</option>
-          <option <?php selected(get_option('chatwootWidgetLocale'), 'ru'); ?> value="ru">русский (ru)</option>
-          <option <?php selected(get_option('chatwootWidgetLocale'), 'sv'); ?> value="sv">Svenska (sv)</option>
-          <option <?php selected(get_option('chatwootWidgetLocale'), 'ta'); ?> value="ta">தமிழ் (ta)</option>
-          <option <?php selected(get_option('chatwootWidgetLocale'), 'tr'); ?> value="tr">Türkçe (tr)</option>
-          <option <?php selected(get_option('chatwootWidgetLocale'), 'vi'); ?> value="vi">Tiếng Việt (vi)</option>
-          <option <?php selected(get_option('chatwootWidgetLocale'), 'zh_CN'); ?> value="zh_CN">中文 (zh-CN)</option>
-          <option <?php selected(get_option('chatwootWidgetLocale'), 'zh_TW'); ?> value="zh_TW">中文 (台湾) (zh-TW)</option>
-          <option <?php selected(get_option('chatwootWidgetLocale'), 'zh'); ?> value="zh'">中文 (zh)</option>
-        </select>
-      </div>
-      <?php if (get_option('chatwootWidgetType') == 'expanded_bubble') : ?>
-        <div class="form--input">
-          <label for="chatwootLauncherText">Launcher Text (Optional)</label>
-          <input
-            type="text"
-            name="chatwootLauncherText"
-            value="<?php echo get_option('chatwootLauncherText'); ?>"
-          />
-        </div>
-      <?php endif; ?>
-      <?php if (!defined('DISABLE_CHATWOOT_DEV_TOOLS') || DISABLE_CHATWOOT_DEV_TOOLS === false): ?>
-  <hr />
-  <h3 style="margin-top:30px;">🛠 Advanced Developer Tools</h3>
-
-  <div class="form--input">
-    <label for="chatwootEnableHmacTester">
-      <input type="checkbox" name="chatwootEnableHmacTester" value="1" <?php checked(get_option('chatwootEnableHmacTester'), '1'); ?> />
-      Enable HMAC Test Page (Tools > Test Chatwoot HMAC)
-    </label>
-  </div>
-
-  <div class="form--input">
-    <label for="chatwootEnableKeyGenerator">
-      <input type="checkbox" name="chatwootEnableKeyGenerator" value="1" <?php checked(get_option('chatwootEnableKeyGenerator'), '1'); ?> />
-      Show Chatwoot Key Generator (Tools > Chatwoot Key Generator)
-    </label>
-  </div>
-
-  <div class="form--input">
-    <label for="chatwootEnableDebugMode">
-      <input type="checkbox" name="chatwootEnableDebugMode" value="1" <?php checked(get_option('chatwootEnableDebugMode'), '1'); ?> />
-      Enable window.ChatwootDebug (Logs to browser console)
-    </label>
-  </div>
-
-  <div class="form--input">
-    <details>
-      <summary>🔍 View Chatwoot Identity Debug</summary>
-      <pre style="background:#f1f1f1;padding:10px;"><?php echo esc_html(print_r(chatwoot_get_user_payload(), true)); ?></pre>
-    </details>
-  </div>
-
-  <div class="form--input">
-    <details>
-      <summary>🐞 Listen to Widget Errors</summary>
-      <pre style="background:#f9f9f9;padding:10px;">
-        window.addEventListener("chatwoot:error", function (e) {
-          console.error("❌ Chatwoot Widget Error", e.detail);
-        });
-      </pre>
-    </details>
-</div>
-<?php endif; ?>
-      <?php submit_button(); ?>
-    </form>
-  </div>
-<?php
-}
-*/
 
 function chatwoot_options_page() {
   ?>
@@ -387,10 +240,11 @@ function chatwoot_options_page() {
 
         <div class="form--input">
           <details>
-            <summary>🐞 Listen to Widget Errors</summary>
+            <summary>🐞 What are Widget Errors?</summary>
+            <p>When Chatwoot fails to load or has issues, it emits a <code>chatwoot:error</code> event. The plugin already listens to these events if <strong>Debug Mode</strong> is enabled. Below is an example:</p>
             <pre>
 window.addEventListener("chatwoot:error", function (e) {
-console.error("❌ Chatwoot Widget Error", e.detail);
+  console.error("❌ Chatwoot Widget Error", e.detail);
 });
             </pre>
           </details>
@@ -404,6 +258,3 @@ console.error("❌ Chatwoot Widget Error", e.detail);
   </div>
 <?php
 }
-
-
-

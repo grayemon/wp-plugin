@@ -1,22 +1,8 @@
 <?php
 
 if (!defined('ABSPATH')) exit; // 🔐 Exit if accessed directly
-//if (get_option('chatwootEnableKeyGenerator') !== '1') return;
 
 class Chatwoot_Key_Generator_Admin {
-
-    /*
-    public function __construct() {
-        if (
-            defined('DISABLE_CHATWOOT_KEY_GENERATOR') &&
-            DISABLE_CHATWOOT_KEY_GENERATOR === true
-        ) {
-            return;
-        }
-
-        add_action('admin_menu', [$this, 'register_tool_page']);
-    }
-    */
 
     public function __construct() {
         if (get_option('chatwootEnableKeyGenerator') !== '1') {
@@ -50,12 +36,11 @@ class Chatwoot_Key_Generator_Admin {
                 $key = 'base64:' . base64_encode(random_bytes(32)); // AES-256
                 $iv  = 'base64:' . base64_encode(random_bytes(16)); // 16-byte IV
             } catch (Exception $e) {
-                //$error = 'Error generating keys: ' . $e->getMessage();
                 $error = '❌ Error generating keys: ' . esc_html($e->getMessage());
             }
         }
         ?>
-        <div class="wrap">
+        <div class="wrap chatwoot-key-generator">
             <h1>🔐 Chatwoot AES Key Generator</h1>
 
             <p>This tool will generate a secure AES-256 encryption key and IV for use with <code>chatwoot_encrypt()</code> / <code>chatwoot_decrypt()</code>.</p>
@@ -84,13 +69,51 @@ class Chatwoot_Key_Generator_Admin {
                 </table>
 
                 <h3>📄 Paste into <code>wp-config.php</code>:</h3>
-                <pre><code>define('CHATWOOT_ENCRYPTION_KEY', '<?php echo esc_js($key); ?>');
-define('CHATWOOT_ENCRYPTION_IV', '<?php echo esc_js($iv); ?>');</code></pre>
+<pre><code>define('CHATWOOT_ENCRYPTION_KEY', '<?php echo esc_js($key); ?>');
+ define('CHATWOOT_ENCRYPTION_IV', '<?php echo esc_js($iv); ?>');</code></pre>
 
                 <p>
-                    <button class="button button-secondary" onclick="navigator.clipboard.writeText(document.getElementById('cw-key').innerText)">📋 Copy Key</button>
-                    <button class="button button-secondary" onclick="navigator.clipboard.writeText(document.getElementById('cw-iv').innerText)">📋 Copy IV</button>
+                    <button class="button button-secondary" type="button" onclick="copyToClipboard('cw-key')">📋 Copy Key</button>
+                    <button class="button button-secondary" type="button" onclick="copyToClipboard('cw-iv')">📋 Copy IV</button>
                 </p>
+
+                <script>
+                    function copyToClipboard(id) {
+                        const el = document.getElementById(id);
+                        if (!el) return;
+
+                        const text = el.textContent || el.innerText;
+
+                        if (navigator.clipboard && window.isSecureContext) {
+                            navigator.clipboard.writeText(text).then(function() {
+                            alert("Copied to clipboard!");
+                            }, function(err) {
+                            alert("Failed to copy: " + err);
+                            });
+                        } else {
+                            // Fallback for non-secure context
+                            const textarea = document.createElement("textarea");
+                            textarea.value = text;
+                            textarea.style.position = "fixed";  // Prevent scrolling to bottom
+                            document.body.appendChild(textarea);
+                            textarea.focus();
+                            textarea.select();
+
+                            try {
+                            const successful = document.execCommand("copy");
+                            if (successful) {
+                                alert("Copied to clipboard!");
+                            } else {
+                                alert("Failed to copy with fallback.");
+                            }
+                            } catch (err) {
+                            alert("Fallback failed: " + err);
+                            }
+
+                            document.body.removeChild(textarea);
+                        }
+                    }
+                </script>
 
             <?php endif; ?>
         </div>

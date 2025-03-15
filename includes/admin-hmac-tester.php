@@ -1,7 +1,6 @@
 <?php
 
 if (!defined('ABSPATH')) exit;
-//if (get_option('chatwootEnableHmacTester') !== '1') return; // 👈 early exit
 
 class Chatwoot_HMAC_Tester_Admin {
 
@@ -54,7 +53,7 @@ class Chatwoot_HMAC_Tester_Admin {
         $is_dev = defined('WP_DEBUG') && WP_DEBUG === true;
 
         ?>
-        <div class="wrap">
+        <div class="wrap chatwoot-hmac-tester">
             <h1>🔐 Chatwoot HMAC Tester</h1>
 
             <?php if ($error): ?>
@@ -103,15 +102,12 @@ class Chatwoot_HMAC_Tester_Admin {
                         <?php endif; ?>
                     </tbody>
                 </table>
-
+                
                 <h3>💬 Sample JavaScript</h3>
-                <pre>
-<code>
-window.$chatwoot.setUser('<?php echo esc_js($visitor_id); ?>', {
-identifier_hash: '<?php echo esc_js($hash); ?>'
-});
-</code>
-                </pre>
+<pre><code>window.$chatwoot.setUser('<?php echo esc_js($visitor_id); ?>', {
+  identifier_hash: '<?php echo esc_js($hash); ?>'
+});</code></pre>
+
             <?php endif; ?>
         </div>
         <?php

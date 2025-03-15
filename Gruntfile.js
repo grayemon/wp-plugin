@@ -15,7 +15,7 @@ module.exports = function( grunt ) {
 				options: {
 					updateDomains: true
 				},
-				src: [ '*.php', '**/*.php', '!\.git/**/*', '!bin/**/*', '!node_modules/**/*', '!tests/**/*' ]
+				src: [ '*.php', '**/*.php', '!\.git/**/*', '!bin/**/*', '!node_modules/**/*', '!tests/**/*', '!vendor/**/*' ] // Updated paths
 			}
 		},
 
@@ -31,7 +31,7 @@ module.exports = function( grunt ) {
 			target: {
 				options: {
 					domainPath: '/languages',
-					exclude: [ '\.git/*', 'bin/*', 'node_modules/*', 'tests/*' ],
+					exclude: [ '\.git/*', 'bin/*', 'node_modules/*', 'tests/*', 'vendor/*' ], // Updated paths
 					mainFile: 'chatwoot-plugin.php',
 					potFilename: 'chatwoot-plugin.pot',
 					potHeaders: {
